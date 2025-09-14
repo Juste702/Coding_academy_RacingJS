@@ -1,117 +1,52 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const canvas = document.querySelector("canvas");
-  const display = document.querySelectorAll("footer div")[1];
+  const footerDivs = document.querySelectorAll("footer > div");
+  if (!footerDivs || footerDivs.length < 2) return;
 
-  let isDraggin = false;
-  let offsetX, offsetY;
+  const canvasContainer = footerDivs[0];
+  const infoDiv = footerDivs[1];
+  const canvas = canvasContainer.querySelector("canvas");
+  if (!canvas) return;
 
-  /* display.style.position = "relative"; */
-  /* canvas.style.position = "absolute"; */
+  if (getComputedStyle(canvasContainer).position === "static") {
+    canvasContainer.style.position = "relative";
+  }
+  canvas.style.position = "absolute";
   canvas.style.left = "0px";
-  canvas.style.top = "0px";
+  canvas.style.top  = "0px";
+  canvas.style.cursor = "grab";
+
+  let isDragging = false, offsetX = 0, offsetY = 0;
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(v, max));
 
   canvas.addEventListener("mousedown", e => {
-    offsetX = e.offsetX;
-    offsetY = e.offsetY;
-    isDraggin = true;
-
+    e.preventDefault();
+    isDragging = true;
+    const rect = canvas.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    canvas.style.cursor = "grabbing";
   });
 
-  canvas.addEventListener("mousemove", e => {
-    if (!isDraggin) return;
+  document.addEventListener("mousemove", e => {
+    if (!isDragging) return;
 
-   /*  let displayRect = display.getBoundingClientRect();
-    let canvasRect = canvas.getBoundingClientRect(); */
+    const cRect = canvasContainer.getBoundingClientRect();
+    let x = e.clientX - cRect.left - offsetX;
+    let y = e.clientY - cRect.top  - offsetY;
 
-    let x = e.clientX - offsetX;
-    let y = e.clientY - offsetY;
-
-    // Empêcher de sortir du canvas
-   /*  if (x < 0) x = 0;
-    if (y < 0) y = 0;
-    if (x + canvasRect.width > displayRect.width)
-      x = displayRect.width - canvas.width;
-    if (y + canvasRect.height > displayRect.height)
-      y = displayRect.height - canvas.height; */
+    x = clamp(x, 0, cRect.width  - canvas.offsetWidth);
+    y = clamp(y, 0, cRect.height - canvas.offsetHeight);
 
     canvas.style.left = x + "px";
-    canvas.style.top = y + "px";
-
-    display.textContent = `New coordinates => {x:${x}, y:${y}}`;
-
+    canvas.style.top  = y + "px";
+    if (infoDiv) infoDiv.textContent = `Coords: {x:${Math.round(x)}, y:${Math.round(y)}}`;
   });
 
-  canvas.addEventListener("mouseup", () => {
-    isDraggin = false;
+  document.addEventListener("mouseup", () => {
+    if (!isDragging) return;
+    isDragging = false;
+    canvas.style.cursor = "grab";
   });
-
-})
-/* const ctx = canvas.getContext("2d");
-
-// On suppose que le carré existe déjà : récupérons sa position via un objet
-const square = {
-  x: 50, // position initiale approximative
-  y: 50,
-  size: 40
-};
-
-let dragging = false;
-let offsetX = 0;
-let offsetY = 0;
-
-function updateCoords() {
-  coordDiv.textContent = `New coordinates => {x:${square.x}, y:${square.y}}`;
-}
-
-function isInsideSquare(mx, my) {
-  return (
-    mx >= square.x &&
-    mx <= square.x + square.size &&
-    my >= square.y &&
-    my <= square.y + square.size
-  );
-}
-
-canvas.addEventListener("mousedown", e => {
-  const mx = e.offsetX;
-  const my = e.offsetY;
-  if (isInsideSquare(mx, my)) {
-    dragging = true;
-    offsetX = mx - square.x;
-    offsetY = my - square.y;
-  }
 });
 
-canvas.addEventListener("mousemove", e => {
-  if (dragging) {
-    square.x = e.offsetX - offsetX;
-    square.y = e.offsetY - offsetY;
-
-    // Empêcher de sortir du canvas
-    if (square.x < 0) square.x = 0;
-    if (square.y < 0) square.y = 0;
-    if (square.x + square.size > canvas.width)
-      square.x = canvas.width - square.size;
-    if (square.y + square.size > canvas.height)
-      square.y = canvas.height - square.size;
-
-    // On redessine le carré (optionnel si CSS déjà gère la couleur)
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "black";
-    ctx.fillRect(square.x, square.y, square.size, square.size);
-
-    updateCoords();
-  }
-});
-
-canvas.addEventListener("mouseup", () => {
-  dragging = false;
-});
-
-canvas.addEventListener("mouseleave", () => {
-  dragging = false;
-});
-
-// Affiche les coordonnées initiales
-updateCoords();
-}); */
