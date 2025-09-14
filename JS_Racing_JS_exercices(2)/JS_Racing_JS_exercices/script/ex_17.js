@@ -1,47 +1,35 @@
 document.addEventListener("DOMContentLoaded", () => {
   const footerDiv = document.querySelector("footer > div");
+  if (!footerDiv) return;
+
+  // Crée un canvas qui remplira le footer div
+  const canvas = document.createElement("canvas");
+  canvas.width = 800;  
+  canvas.height = 600; 
+  footerDiv.appendChild(canvas);
+
+  const ctx = canvas.getContext("2d");
 
   function combineImages(urls) {
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    canvas.width = 500; // taille du canvas
-    canvas.height = 500;
+    urls.forEach(url => {
+      const img = new Image();
+      img.src = url; // image locale
+      img.onload = () => {
+        // Position aléatoire mais entièrement visible
+        const x = Math.random() * (canvas.width - img.width);
+        const y = Math.random() * (canvas.height - img.height);
 
-    footerDiv.appendChild(canvas);
-
-    // Promises pour charger les images
-    const promises = urls.map(
-      (url) =>
-        new Promise((resolve, reject) => {
-          const img = new Image();
-          img.crossOrigin = "anonymous"; // pour éviter certains problèmes CORS
-          img.onload = () => resolve(img);
-          img.onerror = () => reject(`Impossible de charger ${url}`);
-          img.src = url;
-        })
-    );
-
-    Promise.all(promises)
-      .then((images) => {
-        images.forEach((img) => {
-          // Calculer une position aléatoire où l’image reste visible
-          const maxX = canvas.width - img.width;
-          const maxY = canvas.height - img.height;
-          const x = Math.floor(Math.random() * Math.max(1, maxX));
-          const y = Math.floor(Math.random() * Math.max(1, maxY));
-
-          ctx.drawImage(img, x, y);
-        });
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+        ctx.drawImage(img, x, y);
+      };
+      img.onerror = () => console.error("Erreur chargement image:", url);
+    });
   }
 
-  // Exemple d'appel 
+  // Exemple d'appel avec des images locales dans ./img/
   combineImages([
-    "element-1.png",
-    "element-2.png",
-    "element-4.png"
+    "./img/element-1.png",
+    "./img/element-2.png",
+    "./img/element-4.png"
   ]);
 });
+

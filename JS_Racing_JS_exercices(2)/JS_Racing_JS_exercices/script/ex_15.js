@@ -1,22 +1,45 @@
 document.addEventListener("DOMContentLoaded", () => {
   const dot = document.querySelector(".dot");
-  const apiUrl = "https://api.coindesk.com/v1/bpi/currentprice.json";
-  const storageKey = "bitcoin_price_eur";
+  if (!dot) {
+    console.error("Dot introuvable");
+    return;
+  }
 
-  const updateDotColor = (prev, current) => {
-    if (current > prev) dot.style.backgroundColor = "green";
-    else if (current < prev) dot.style.backgroundColor = "red";
-    else dot.style.backgroundColor = "orange";
-  };
+  const endpoint = "https://data-api.coindesk.com/index/cc/v1/latest/tick?market=sda&instruments=XBX-USD";
 
-  fetch(apiUrl)
+  fetch(endpoint)
     .then(res => res.json())
     .then(data => {
-      const currentPrice = parseFloat(data.bpi.EUR.rate.replace(",", ""));
-      const prevPrice = parseFloat(localStorage.getItem(storageKey)) || currentPrice;
+      try {
+        const price = data.Data["XBX-USD"].last_trade;
+        console.log("Prix actuel Bitcoin:", price);
 
-      updateDotColor(prevPrice, currentPrice);
-      localStorage.setItem(storageKey, currentPrice);
+        const prevPrice = parseFloat(localStorage.getItem("bitcoinPrice"));
+
+        // Comparer avec le prix précédent
+        if (!isNaN(prevPrice)) {
+          if (price > prevPrice) {
+            dot.style.backgroundColor = "green";
+          } else if (price < prevPrice) {
+            dot.style.backgroundColor = "red";
+          } else {
+            dot.style.backgroundColor = "orange";
+          }
+        } else {
+          // Premier chargement
+          dot.style.backgroundColor = "orange";
+        }
+
+        // Stocker le prix actuel pour le prochain refresh
+        localStorage.setItem("bitcoinPrice", price);
+      } catch (err) {
+        console.error("Erreur traitement Bitcoin:", err);
+        dot.style.backgroundColor = "orange"; // fallback
+      }
     })
-    .catch(err => console.error("Erreur API:", err));
+    .catch(err => {
+      console.error("Erreur récupération Bitcoin:", err);
+      dot.style.backgroundColor = "orange"; // fallback
+    });
 });
+
